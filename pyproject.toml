@@ -1,0 +1,17 @@
+[project]
+name = "mlopsassignment"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=3.0.0",
+    "pandera>=0.29.0",
+    "prefect>=3.6.16",
+    "pyarrow>=23.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
