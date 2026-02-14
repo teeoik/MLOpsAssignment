@@ -1,0 +1,6 @@
+.venv
+.python-version
+
+data
+
+*__pycache__
