@@ -1,6 +1,6 @@
 .venv
 .python-version
 
-data
+data/input/*
 
 *__pycache__
