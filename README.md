@@ -2,17 +2,23 @@
 DataOps data pipeline assignment. Data pipeline to prepare weather data for ML. ML part will be implemented later, but goal is to predict mean temperature for the next day.
 Data used: [Daily Climate time series data](https://www.kaggle.com/datasets/sumanthvrao/daily-climate-time-series-data)'
 
-Current version has data pipeline to ingest data batches on at the time:
+Current version has functions to:
 - Create new bronze dataset file for new batch.
 - Update silver dataset, use all batches available.
 - Update gold dataset designed for predicting next day mean temperature.
 - Validate data after each step.
 - Run data quality tests after.
 
-To run data pipeline for new batch run in main directory:
-`uv run python -m src.run_data_pipeline --batch-id {batch number, like 01}`
+New input csv batch to bronze batch:
+`uv run python -m src.build_bronze_batch --batch-id {batch number}`
 
-To run tests:
+All bronze batches to silver dataset:
+`uv run python -m src.build_silver`
+
+Silver dataset to all defined gold datasets:
+`uv run python -m src.build_gold`
+
+To run data quality tests:
 `uv run python -m pytest -q`
 
 Currently no data versioning/tracking is implemented.
@@ -36,5 +42,5 @@ Initial gold dataset structure for predicting mean temperature of next day is:
 This is pretty simple initial guess for usefull history information for prediction task. Testing models will give better idea what is usefull.
 
 ## Tech stack
-Project uses Python and Pandas for data processing. uv is used as Python environment manager, and 'pyproject.toml' can be checked for used versions. Data quality tests are done using Pytest.
+Project uses Python and Pandas for data processing. uv is used as Python environment manager, and 'pyproject.toml' can be checked for used versions. Data quality validated using Pandera. Tests for saved parquet files are done by Pytest.
 

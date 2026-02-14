@@ -1,68 +1,109 @@
 import pandas as pd
+import pandera.pandas as pa
+from pandera.typing import Series
+
 from src.config import LIMITS
 
 
 
-# Validation functions
 
-def validate_original_cols(df: pd.DataFrame) -> bool:
-    """ Check if columns are as expected for bronze and silver."""
-    expected_cols = {"date", "meantemp", "humidity", "wind_speed", "meanpressure"}
-    return set(df.columns) == expected_cols
+# Helper functions
 
-
-def validate_dates(df: pd.DataFrame) -> bool:
-    """ Check if dates are continuous and increasing. """
-    return df["date"].is_monotonic_increasing and df["date"].is_unique
-
-def validate_no_missing_vals(df: pd.DataFrame) -> bool:
-    """ Check if there are no missing values in the silver data. """
-    return not df.isna().any().any()
-
-def validate_ranges_silver(df: pd.DataFrame) -> bool:
-    """ Check if numeric values are within expected ranges. """
-    return (
-        df["meantemp"].between(LIMITS.temp_min, LIMITS.temp_max).all() and
-        df["humidity"].between(LIMITS.humidity_min, LIMITS.humidity_max).all() and
-        df["wind_speed"].between(LIMITS.wind_speed_min, LIMITS.wind_speed_max).all() and
-        df["meanpressure"].between(LIMITS.pressure_min, LIMITS.pressure_max).all()
-    )
-
-def validate_ranges_gold_next_day_temp(df: pd.DataFrame) -> bool:
-    """ Check if numeric values are within expected ranges. """
-    temp_cols = ["meantemp_today", "meantemp_lag_1", "meantemp_lag_7", "meantemp_roll_7", "target"]
-    humidity_cols = ["humidity_today", "humidity_lag_1", "humidity_roll_7"]
-    pressure_cols = ["meanpressure_today", "meanpressure_lag_1", "meanpressure_roll_7"]
-    return (
-        ((df[temp_cols] >= LIMITS.temp_min) & (df[temp_cols] <= LIMITS.temp_max)).all().all() and
-        ((df[humidity_cols] >= LIMITS.humidity_min) & (df[humidity_cols] <= LIMITS.humidity_max)).all().all() and
-        ((df[pressure_cols] >= LIMITS.pressure_min) & (df[pressure_cols] <= LIMITS.pressure_max)).all().all()
-    )
+def _check_daily_continuity(df: pd.DataFrame) -> bool:
+    d = df["date"]
+    if d.isna().any():
+        return False
+    full = pd.date_range(d.min(), d.max(), freq="D")
+    return len(full) == len(d) and (d.values == full.values).all()
 
 
-# All validations
 
-def validate_bronze(df: pd.DataFrame) -> None:
-    """ Run all bronze validation checks. """
-    if not validate_original_cols(df):
-        raise ValueError("Bronze validation failed: Columns are not as expected.")
 
-def validate_silver(df: pd.DataFrame) -> None:
-    """ Run all silver validation checks. """
-    if not validate_original_cols(df):
-        raise ValueError("Silver validation failed: Columns are not as expected.")
-    if not validate_dates(df):
-        raise ValueError("Silver validation failed: Dates are not continuous and increasing.")
-    if not validate_ranges_silver(df):
-        raise ValueError("Silver validation failed: Numeric values are out of expected ranges.")
-    if not validate_no_missing_vals(df):
-        raise ValueError("Silver validation failed: Missing values found.")
 
-def validate_gold_next_day_temp(df: pd.DataFrame) -> None:
-    """ Run all gold validation checks. """
-    if not validate_dates(df):
-        raise ValueError("Gold validation failed: Dates are not continuous and increasing.")
-    if not validate_ranges_gold_next_day_temp(df):
-        raise ValueError("Gold validation failed: Numeric values are out of expected ranges.")
-    if not validate_no_missing_vals(df):
-        raise ValueError("Gold validation failed: Missing values found.")
+
+# Bronze:
+# - At least required columns exists with correct types. Additional cols allowed.
+# - No other checks
+
+class BronzeSchema(pa.DataFrameModel):
+    date: Series[pd.Timestamp]
+    meantemp: Series[float]
+    humidity: Series[float]
+    wind_speed: Series[float]
+    meanpressure: Series[float]
+
+    class Config:
+        strict = False
+        coerce = True
+
+
+# Silver:
+# - Required columns with correct types, no additional columns.
+# - Dates continuous and increasing.
+# - Numeric values within expected ranges, no missing values.
+
+class SilverSchema(pa.DataFrameModel):
+    date: Series[pd.Timestamp] = pa.Field(nullable=False)
+    meantemp: Series[float] = pa.Field(nullable=False, ge=LIMITS.temp_min, le=LIMITS.temp_max)
+    humidity: Series[float] = pa.Field(nullable=False, ge=LIMITS.humidity_min, le=LIMITS.humidity_max)
+    wind_speed: Series[float] = pa.Field(nullable=False, ge=LIMITS.wind_speed_min, le=LIMITS.wind_speed_max)
+    meanpressure: Series[float] = pa.Field(nullable=False, ge=LIMITS.pressure_min, le=LIMITS.pressure_max)
+
+    class Config:
+        strict = True
+        coerce = True
+
+    @pa.dataframe_check
+    def unique_dates(cls, df: pd.DataFrame) -> bool:
+        return df["date"].is_unique
+
+    @pa.dataframe_check
+    def increasing_dates(cls, df: pd.DataFrame) -> bool:
+        return df["date"].is_monotonic_increasing
+
+    @pa.dataframe_check
+    def continuous_dates(cls, df: pd.DataFrame) -> bool:
+        return _check_daily_continuity(df)
+    
+
+# Gold:
+# - Required columns with correct types, no additional columns.
+# - Dates continuous and increasing.
+
+class GoldSchema(pa.DataFrameModel):
+    date: Series[pd.Timestamp] = pa.Field(nullable=False)
+
+    class Config:
+        strict = True
+        coerce = True
+
+    @pa.dataframe_check
+    def unique_dates(cls, df: pd.DataFrame) -> bool:
+        return df["date"].is_unique
+
+    @pa.dataframe_check
+    def increasing_dates(cls, df: pd.DataFrame) -> bool:
+        return df["date"].is_monotonic_increasing
+
+    @pa.dataframe_check
+    def continuous_dates(cls, df: pd.DataFrame) -> bool:
+        return _check_daily_continuity(df)
+
+
+# Specific gold schema for next day temperature prediction:
+# - Date manegement inherited from GoldSchema.
+# - Required columns with correct types, no additional columns.
+# - Numeric values within expected ranges, no missing values.
+
+class GoldNextDayTempSchema(GoldSchema):
+    meantemp_today: Series[float] = pa.Field(nullable=False, ge=LIMITS.temp_min, le=LIMITS.temp_max)
+    meantemp_lag_1: Series[float] = pa.Field(nullable=False, ge=LIMITS.temp_min, le=LIMITS.temp_max)
+    meantemp_lag_7: Series[float] = pa.Field(nullable=False, ge=LIMITS.temp_min, le=LIMITS.temp_max)
+    meantemp_roll_7: Series[float] = pa.Field(nullable=False, ge=LIMITS.temp_min, le=LIMITS.temp_max)
+    humidity_today: Series[float] = pa.Field(nullable=False, ge=LIMITS.humidity_min, le=LIMITS.humidity_max)
+    humidity_lag_1: Series[float] = pa.Field(nullable=False, ge=LIMITS.humidity_min, le=LIMITS.humidity_max)
+    humidity_roll_7: Series[float] = pa.Field(nullable=False, ge=LIMITS.humidity_min, le=LIMITS.humidity_max)
+    meanpressure_today: Series[float] = pa.Field(nullable=False, ge=LIMITS.pressure_min, le=LIMITS.pressure_max)
+    meanpressure_lag_1: Series[float] = pa.Field(nullable=False, ge=LIMITS.pressure_min, le=LIMITS.pressure_max)
+    meanpressure_roll_7: Series[float] = pa.Field(nullable=False, ge=LIMITS.pressure_min, le=LIMITS.pressure_max)
+    target: Series[float] = pa.Field(nullable=False, ge=LIMITS.temp_min, le=LIMITS.temp_max)

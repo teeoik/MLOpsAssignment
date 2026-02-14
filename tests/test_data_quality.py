@@ -2,9 +2,10 @@ import pandas as pd
 from pathlib import Path
 import pytest
 
-import src.data_validation as validation
 from src.config import PATHS
-
+from src.data_validation import BronzeSchema
+from src.data_validation import SilverSchema
+from src.data_validation import GoldNextDayTempSchema
 
 
 
@@ -15,19 +16,19 @@ def test_bronze() -> None:
         pytest.skip("No bronze batches found.")
     for path in paths:
         df = pd.read_parquet(path)
-        validation.validate_bronze(df)
+        BronzeSchema.validate(df)
 
 def test_silver() -> None:
     path = PATHS.silver / "silver.parquet"
     if not path.exists():
         pytest.skip("No silver batch found.")
     df = pd.read_parquet(path)
-    validation.validate_silver(df)
+    SilverSchema.validate(df)
 
 def test_gold() -> None:
     """ Read gold parquet file and validate data quality. """
-    path = PATHS.gold / "gold_next_day_temp.parquet"
+    path = PATHS.gold / "next_day_temp.parquet"
     if not path.exists():
         pytest.skip("No gold batch found.")
     df = pd.read_parquet(path)
-    validation.validate_gold_next_day_temp(df)
+    GoldNextDayTempSchema.validate(df)
