@@ -1,0 +1,17 @@
+stages:
+  silver:
+    cmd: uv run python -m src.build_silver
+    deps:
+    - data/bronze
+    - src/config.py
+    - src/data_validation.py
+    outs:
+    - data/silver/silver.parquet
+  gold:
+    cmd: uv run python -m src.build_gold
+    deps:
+    - data/silver/silver.parquet
+    - src/config.py
+    - src/data_validation.py
+    outs:
+    - data/gold/next_day_temp.parquet

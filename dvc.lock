@@ -1,0 +1,43 @@
+schema: '2.0'
+stages:
+  silver:
+    cmd: uv run python -m src.build_silver
+    deps:
+    - path: data/bronze
+      hash: md5
+      md5: 24b7950edd9c3d4c32963bffb7e090d2.dir
+      size: 10505
+      nfiles: 1
+    - path: src/config.py
+      hash: md5
+      md5: 5e44444697a7f4ddbe455bf50cf759e3
+      size: 1554
+    - path: src/data_validation.py
+      hash: md5
+      md5: 6c84772dc449ae083f382fc638dc4187
+      size: 4062
+    outs:
+    - path: data/silver/silver.parquet
+      hash: md5
+      md5: a02fc2f94dba47b335f0b75bea6e9886
+      size: 11218
+  gold:
+    cmd: uv run python -m src.build_gold
+    deps:
+    - path: data/silver/silver.parquet
+      hash: md5
+      md5: a02fc2f94dba47b335f0b75bea6e9886
+      size: 11218
+    - path: src/config.py
+      hash: md5
+      md5: 5e44444697a7f4ddbe455bf50cf759e3
+      size: 1554
+    - path: src/data_validation.py
+      hash: md5
+      md5: 6c84772dc449ae083f382fc638dc4187
+      size: 4062
+    outs:
+    - path: data/gold/next_day_temp.parquet
+      hash: md5
+      md5: 61c29534cdb0e6af80d58d2c566aa19b
+      size: 27365
