@@ -9,19 +9,8 @@ Current version has functions to:
 - Validate data after each step.
 - Run data quality tests after.
 
-New input csv batch to bronze batch:
-`uv run python -m src.build_bronze_batch --batch-id {batch number}`
-
-All bronze batches to silver dataset:
-`uv run python -m src.build_silver`
-
-Silver dataset to all defined gold datasets:
-`uv run python -m src.build_gold`
-
-To run data quality tests:
-`uv run python -m pytest -q`
-
-Currently no data versioning/tracking is implemented.
+Run pipeline for new batch:
+`./scripts/run_pipeline.sh --batch-id {batch_id}`
 
 ## Data management
 Data is managed as pandas data frames and saved as parquet files.
@@ -42,5 +31,5 @@ Initial gold dataset structure for predicting mean temperature of next day is:
 This is pretty simple initial guess for usefull history information for prediction task. Testing models will give better idea what is usefull.
 
 ## Tech stack
-Project uses Python and Pandas for data processing. uv is used as Python environment manager, and 'pyproject.toml' can be checked for used versions. Data quality validated using Pandera. Tests for saved parquet files are done by Pytest.
+Project uses Python and Pandas for data processing. uv is used as Python environment manager, and 'pyproject.toml' can be checked for used versions. Data quality validated using Pandera. Tests for saved parquet files are done by Pytest. DVC is used for data versioning + pipeline.
 

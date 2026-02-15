@@ -3,6 +3,7 @@ from pathlib import Path
 
 from src.config import LIMITS
 from src.config import PATHS
+from src.config import INPUT_METADATA_COLS
 from src.data_validation import SilverSchema
 
 
@@ -26,6 +27,9 @@ def _build_silver(bronze_df: pd.DataFrame) -> pd.DataFrame:
     - Numeric values withing range and not missing.
     """
     df = bronze_df.copy()
+
+    # Remove metadata columns
+    df = df.drop(columns=INPUT_METADATA_COLS, errors="ignore")
 
     # Manage dates
     df["date"] = pd.to_datetime(df["date"], errors="coerce")    # To pandas datetime, coerce errors to NaT

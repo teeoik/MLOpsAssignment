@@ -3,6 +3,11 @@ from pathlib import Path
 
 
 
+INPUT_METADATA_COLS = ["source_path", "source_sha", "git_commit_hash", "ingested_at"]
+
+
+
+
 
 @dataclass(frozen=True)
 class ProjectPaths:

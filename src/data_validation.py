@@ -22,18 +22,25 @@ def _check_daily_continuity(df: pd.DataFrame) -> bool:
 
 
 # Bronze:
-# - At least required columns exists with correct types. Additional cols allowed.
+# - Check df contains cols expected in raw data and metadata cols.
 # - No other checks
 
 class BronzeSchema(pa.DataFrameModel):
+    # Raw data columns:
     date: Series[pd.Timestamp]
     meantemp: Series[float]
     humidity: Series[float]
     wind_speed: Series[float]
     meanpressure: Series[float]
 
+    # Metadata columns:
+    source_path: Series[str]
+    source_sha: Series[str]
+    git_commit_hash: Series[str]
+    ingested_at: Series[pd.Timestamp]
+
     class Config:
-        strict = False
+        strict = True
         coerce = True
 
 
