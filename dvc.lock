@@ -5,7 +5,7 @@ stages:
     deps:
     - path: data/bronze
       hash: md5
-      md5: c865b86003a5d65c3afea3c916580a92.dir
+      md5: 98bb39c5d10bc175cf48db73777da9ca.dir
       size: 67759
       nfiles: 5
     - path: src/config.py
