@@ -12,6 +12,8 @@ Current version has functions to:
 Run pipeline for new batch:
 `./scripts/run_pipeline.sh --batch-id {batch_id}`
 
+After all batches are run, commit 'dvc.lock' and 'data/bronze.dvc'. Then push dvc and git.
+
 ## Data management
 Data is managed as pandas data frames and saved as parquet files.
 
