@@ -5,8 +5,8 @@ stages:
     deps:
     - path: data/bronze
       hash: md5
-      md5: 98bb39c5d10bc175cf48db73777da9ca.dir
-      size: 67759
+      md5: 61b7b01c19ba8123795999c6c1f1b5eb.dir
+      size: 67079
       nfiles: 5
     - path: src/config.py
       hash: md5
@@ -19,15 +19,15 @@ stages:
     outs:
     - path: data/silver/silver.parquet
       hash: md5
-      md5: 47397048d5a2fe62a3f5c2cd16a9f494
-      size: 37115
+      md5: 042ce4256dade1ed612c60e7b6bfa319
+      size: 37024
   gold:
     cmd: uv run python -m src.build_gold
     deps:
     - path: data/silver/silver.parquet
       hash: md5
-      md5: 47397048d5a2fe62a3f5c2cd16a9f494
-      size: 37115
+      md5: 042ce4256dade1ed612c60e7b6bfa319
+      size: 37024
     - path: src/config.py
       hash: md5
       md5: f8bc104694f15ecb593bd5565a4f46bd
@@ -39,5 +39,5 @@ stages:
     outs:
     - path: data/gold/next_day_temp.parquet
       hash: md5
-      md5: bed36079e9759c377c064d52e05ff72a
-      size: 92855
+      md5: 4a220c2821db8b448393b869cdb332cd
+      size: 90681
